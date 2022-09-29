@@ -1,0 +1,24 @@
+.tile {
+  display: grid;
+  place-items: center;
+  border-radius: 25%;
+  padding: 5px;
+  font-weight: bold;
+  font-size: 2em;
+
+  border: 1px solid white;
+  background: #707070;
+}
+
+.tileSelected {
+  display: grid;
+  place-items: center;
+  border-radius: 25%;
+  font-weight: bold;
+  padding: 5px;
+  font-size: 2em;
+
+  border: 1px solid #888888;
+  background: black;
+  color: red;
+}

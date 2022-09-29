@@ -1,0 +1,17 @@
+.container {
+  opacity: 0.5;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.circle {
+  background: #b82828;
+  position: absolute;
+  border-radius: 50%;
+}
+
+.line {
+  background: #b82828;
+  position: absolute;
+}
