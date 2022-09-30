@@ -32,3 +32,17 @@ Your app is ready to be deployed!
 ## Deployment
 
 You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+
+### Github pages
+First commit the dist folder:
+
+```sh
+git add dist -f
+git commit -m "Adding dist"
+```
+
+Then push:
+
+```sh
+git subtree push --prefix dist origin gh-pages
+```
