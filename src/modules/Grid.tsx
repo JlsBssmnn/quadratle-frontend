@@ -23,10 +23,20 @@ export default function Grid(props: GridProps) {
   const [recordPath, setRecordPath] = createSignal<boolean>(false);
   const [hoveredTile, setHoveredTile] = createSignal<TilePosition | null>(null);
 
+  // the id of the touch event that we want to track
+  const [activeTouchEvent, setActiveTouchEvent] = createSignal<
+    number | undefined
+  >();
+
   const gridGap = 4;
+  const dimensionality = 4;
 
   let timerId: number;
 
+  let grid: HTMLElement | undefined = undefined;
+
+  // this will be called whenever we hover over a different tile
+  // we then might update the path that we record
   createEffect(() => {
     if (!recordPath()) {
       return;
@@ -62,8 +72,46 @@ export default function Grid(props: GridProps) {
     }
   });
 
-  function startRecording(e: MouseEvent) {
-    e.preventDefault();
+  /**
+   * This function gets a touch event and determines which tile is being hoverd
+   * given this event. Note that we only track the `activeTouchEvent` to avoid
+   * weird behavoir when using multiple fingers.
+   */
+  function updateHoveredTileTouch(e: TouchEvent) {
+    const event = e.changedTouches[0];
+    if (event.identifier !== activeTouchEvent()) {
+      return;
+    }
+
+    const xPos =
+      event.pageX - (grid!.getBoundingClientRect().left + window.scrollX);
+    const yPos =
+      event.pageY - (grid!.getBoundingClientRect().top + window.scrollY);
+    const gridWidth = grid!.clientWidth;
+    const gridHeight = grid!.clientHeight;
+
+    if (xPos < 0 || xPos > gridWidth || yPos < 0 || yPos > gridHeight) {
+      setHoveredTile(null);
+      return;
+    }
+    const gapSize = (gridWidth * gridGap) / 100;
+    const tileSize =
+      (gridWidth - (dimensionality - 1) * gapSize) / dimensionality;
+
+    const row = Math.floor(yPos / (tileSize + gapSize));
+    const column = Math.floor(xPos / (tileSize + gapSize));
+
+    const offsetX = xPos % (tileSize + gapSize);
+    const offsetY = yPos % (tileSize + gapSize);
+
+    if (offsetX <= tileSize && offsetY <= tileSize) {
+      setHoveredTile({ row, column });
+    } else {
+      setHoveredTile(null);
+    }
+  }
+
+  function startRecording() {
     if (hoveredTile() != null) {
       setRecordPath(true);
       setSelectedTiles([hoveredTile() as TilePosition]);
@@ -87,6 +135,23 @@ export default function Grid(props: GridProps) {
     timerId = setTimeout(() => {
       props.setRecordedWord("");
     }, 2000);
+  }
+
+  function mouseDown(e: MouseEvent) {
+    e.preventDefault();
+    startRecording();
+  }
+
+  function touchStart(e: TouchEvent) {
+    e.preventDefault();
+    setActiveTouchEvent(e.changedTouches[0].identifier);
+    updateHoveredTileTouch(e);
+    startRecording();
+  }
+
+  function touchMove(e: TouchEvent) {
+    e.preventDefault();
+    updateHoveredTileTouch(e);
   }
 
   function mouseUp() {
@@ -114,9 +179,16 @@ export default function Grid(props: GridProps) {
     <div
       class={styles.grid}
       style={{ gap: `${gridGap}%` }}
-      onmousedown={(e) => startRecording(e)}
+      onmousedown={(e) => mouseDown(e)}
+      // @ts-ignore
+      on:touchstart={(e: TouchEvent) => touchStart(e)}
+      // @ts-ignore
+      on:touchmove={(e: TouchEvent) => touchMove(e)}
       onmouseup={() => mouseUp()}
       onmouseleave={() => mouseLeave()}
+      onTouchEnd={() => finishRecording()}
+      onTouchCancel={() => finishRecording()}
+      ref={grid}
     >
       <Path path={selectedTiles()} offset={gridGap} />
       <For each={props.board}>

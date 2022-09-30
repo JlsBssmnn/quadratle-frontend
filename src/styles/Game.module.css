@@ -57,6 +57,19 @@
     flex-direction: column;
     align-items: center;
     gap: 30px;
+    margin: 20px 0;
+  }
+}
+
+@media all and (max-width: 620px) {
+  .game {
+    height: 100%;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    margin: 20px 0;
   }
 }
 
