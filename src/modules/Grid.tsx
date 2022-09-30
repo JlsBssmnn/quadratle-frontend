@@ -23,7 +23,7 @@ export default function Grid(props: GridProps) {
   const [recordPath, setRecordPath] = createSignal<boolean>(false);
   const [hoveredTile, setHoveredTile] = createSignal<TilePosition | null>(null);
 
-  const gridGap = 2;
+  const gridGap = 4;
 
   let timerId: number;
 
@@ -62,7 +62,7 @@ export default function Grid(props: GridProps) {
     }
   });
 
-  function mouseDown(e: MouseEvent) {
+  function startRecording(e: MouseEvent) {
     e.preventDefault();
     if (hoveredTile() != null) {
       setRecordPath(true);
@@ -98,7 +98,7 @@ export default function Grid(props: GridProps) {
   }
 
   function tileEnter(row: number, column: number) {
-    return (e: MouseEvent) => {
+    return () => {
       setHoveredTile({
         row,
         column,
@@ -106,17 +106,15 @@ export default function Grid(props: GridProps) {
     };
   }
 
-  function tileLeave(row: number, column: number) {
-    return (e: MouseEvent) => {
-      setHoveredTile(null);
-    };
+  function tileLeave() {
+    setHoveredTile(null);
   }
 
   return (
     <div
       class={styles.grid}
       style={{ gap: `${gridGap}%` }}
-      onmousedown={(e) => mouseDown(e)}
+      onmousedown={(e) => startRecording(e)}
       onmouseup={() => mouseUp()}
       onmouseleave={() => mouseLeave()}
     >
@@ -131,7 +129,7 @@ export default function Grid(props: GridProps) {
                   (tile) => tile.row == index() && tile.column == index2()
                 )}
                 enterNotifier={tileEnter(index(), index2())}
-                leaveNotifier={tileLeave(index(), index2())}
+                leaveNotifier={tileLeave}
               />
             )}
           </For>

@@ -8,11 +8,25 @@ export default class PathEvaluater {
   undiscoveredWords: Set<string>;
   discoveredWords: Set<string>;
 
-  constructor(board: string[][], correctWords: string[]) {
+  constructor(
+    board: string[][],
+    correctWords: string[],
+    initialDiscoveredWords?: string[]
+  ) {
     this.board = board;
     this.correctWords = new Set(correctWords);
-    this.undiscoveredWords = new Set(correctWords);
-    this.discoveredWords = new Set();
+    this.discoveredWords = new Set(
+      initialDiscoveredWords?.filter((word) =>
+        this.correctWords.has(sha256(word))
+      )
+    );
+
+    const hashedDiscoveredWords = Array.from(this.discoveredWords).map((word) =>
+      sha256(word)
+    );
+    this.undiscoveredWords = new Set(
+      correctWords.filter((word) => !hashedDiscoveredWords.includes(word))
+    );
   }
 
   pathToString(path: TilePath): string {
@@ -33,6 +47,12 @@ export default class PathEvaluater {
     if (correct) {
       this.undiscoveredWords.delete(hash);
       this.discoveredWords.add(s);
+
+      localStorage.setItem(
+        "discoveredWords",
+        JSON.stringify(Array.from(this.discoveredWords))
+      );
+
       discoveredWords((old) => {
         if (old.has(s.length)) {
           return new Map(old.set(s.length, [...old.get(s.length)!, s]));

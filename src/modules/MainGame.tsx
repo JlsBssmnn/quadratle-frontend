@@ -1,27 +1,45 @@
 import Grid, { TilePath } from "./Grid";
 
 import styles from "../styles/Game.module.css";
-import { createEffect, createSignal } from "solid-js";
+import { createSignal } from "solid-js";
 import WordList from "./WordList";
 import PathEvaluater from "../logic/PathEvaluater";
 import Progress from "./Progress";
+import { sha256 } from "js-sha256";
 
 export interface GameProps {
   grid: string[][];
   correctWords: string[];
-  wordLengths: number[];
+  counts: { [key: string]: number };
+  initialDiscoveredWords?: string[];
 }
 
 type WordState = "recording" | "right" | "wrong";
 
 export default function MainGame(props: GameProps) {
-  const [discoveredWords, setDiscoveredWords] = createSignal<
-    Map<number, string[]>
-  >(new Map());
+  const initalMap: Map<number, string[]> = new Map();
+  if (props.initialDiscoveredWords) {
+    for (const word of props.initialDiscoveredWords) {
+      if (!props.correctWords.includes(sha256(word))) {
+        continue;
+      } else if (initalMap.has(word.length)) {
+        initalMap.get(word.length)!.push(word);
+      } else {
+        initalMap.set(word.length, [word]);
+      }
+    }
+  }
+
+  const [discoveredWords, setDiscoveredWords] =
+    createSignal<Map<number, string[]>>(initalMap);
   const [recordedWord, setRecordedWord] = createSignal<string>("");
   const [wordState, setWordState] = createSignal<WordState>("recording");
 
-  const evaluater = new PathEvaluater(props.grid, props.correctWords);
+  const evaluater = new PathEvaluater(
+    props.grid,
+    props.correctWords,
+    props.initialDiscoveredWords
+  );
 
   function newRecording() {
     setWordState("recording");
@@ -44,10 +62,7 @@ export default function MainGame(props: GameProps) {
 
   return (
     <div class={styles.game}>
-      <WordList
-        wordLengths={props.wordLengths}
-        discoveredWords={discoveredWords()}
-      />
+      <WordList counts={props.counts} discoveredWords={discoveredWords()} />
       <div class={styles.main}>
         <Progress
           discoveredWords={numberOfCorrectWords()}

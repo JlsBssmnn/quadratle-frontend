@@ -11,27 +11,41 @@ const App: Component = () => {
     const json = await res.json();
 
     const grid = json.grid as string[][];
-    const wordLengths = Object.keys(json.counts).map((num) => parseInt(num));
+
+    let initialDiscoveredWords: string[] | undefined = undefined;
+
+    if (
+      localStorage.getItem("timestamp") ===
+      new Date().toLocaleDateString("de-DE")
+    ) {
+      const storedWords = localStorage.getItem("discoveredWords");
+      if (storedWords != null) {
+        initialDiscoveredWords = JSON.parse(storedWords);
+      }
+    } else {
+      localStorage.removeItem("discoveredWords");
+      localStorage.setItem("timestamp", new Date().toLocaleDateString("de-DE"));
+    }
 
     setGameState({
       grid,
       correctWords: json.solution,
-      wordLengths,
+      counts: json.counts,
+      initialDiscoveredWords,
     });
   });
 
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <Show when={gameState() != null}>
-          <MainGame
-            grid={gameState()!.grid}
-            correctWords={gameState()!.correctWords}
-            wordLengths={gameState()!.wordLengths}
-          />
-        </Show>
-        <Show when={gameState() == null}>Loading...</Show>
-      </header>
+    <div class={styles.header}>
+      <Show when={gameState() != null}>
+        <MainGame
+          grid={gameState()!.grid}
+          correctWords={gameState()!.correctWords}
+          counts={gameState()!.counts}
+          initialDiscoveredWords={gameState()!.initialDiscoveredWords}
+        />
+      </Show>
+      <Show when={gameState() == null}>Loading...</Show>
     </div>
   );
 };
